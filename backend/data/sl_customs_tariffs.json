@@ -1,0 +1,18 @@
+{
+  "hs_code": "5208.11.00",
+  "category": "Apparel Raw Material / Woven Fabrics",
+  "description": "Woven fabrics of cotton, containing 85% or more by weight of cotton, weighing not more than 200 g/m2, plain weave, unbleached",
+  "tariffs": {
+    "cid_rate": 0.0,
+    "cid_note": "0% Exempted under Sri Lanka Apparel Export Manufacturing Initiative",
+    "pal_rate": 0.10,
+    "pal_note": "10% Port & Airport Development Levy calculated on CIF value",
+    "cess_rate": 0.15,
+    "cess_note": "15% Sri Lanka Export Development Board CESS Levy",
+    "vat_rate": 0.18,
+    "vat_note": "18% Value Added Tax on Composite Base (CIF + CID + PAL + CESS)"
+  },
+  "vector_embedding": [0.0142, -0.0921, 0.4128, 0.8812, 0.0031, -0.1412],
+  "anchor_exchange_rate_lkr": 310.45,
+  "confidence_score": 0.984
+}
