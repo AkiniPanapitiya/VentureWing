@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Calculator, HelpCircle, ShieldCheck, CheckCircle } from 'lucide-react';
+import { Calculator, CheckCircle, Ship, Plane } from 'lucide-react';
 
 export interface DutyItem {
   code: string;
@@ -13,22 +13,36 @@ export interface DutyItem {
 }
 
 export interface TariffTableProps {
+  hsCode?: string;
+  hsDescription?: string;
   fobTotalUsd?: number;
+  freightMode?: 'sea' | 'air';
   freightUsd?: number;
   exchangeRate?: number;
+  onFreightModeChange?: (mode: 'sea' | 'air') => void;
 }
 
 export const TariffTable: React.FC<TariffTableProps> = ({
+  hsCode = '5208.11.00',
+  hsDescription = 'Woven fabrics of cotton, unbleached, weight <= 200g/m2',
   fobTotalUsd = 25000.0,
+  freightMode = 'sea',
   freightUsd = 1200.0,
   exchangeRate = 310.45,
+  onFreightModeChange,
 }) => {
+  const isZeroDutyHs = hsCode === '5208.11.00';
+  const cidRate = isZeroDutyHs ? 0.0 : 0.15;
+  const palRate = 0.10;
+  const cessRate = 0.15;
+  const vatRate = 0.18;
+
   const cifUsd = fobTotalUsd + freightUsd;
-  const cidUsd = 0.0;
-  const palUsd = cifUsd * 0.1; // 10%
-  const cessUsd = cifUsd * 0.15; // 15%
+  const cidUsd = cifUsd * cidRate;
+  const palUsd = cifUsd * palRate;
+  const cessUsd = cifUsd * cessRate;
   const vatBaseUsd = cifUsd + cidUsd + palUsd + cessUsd;
-  const vatUsd = vatBaseUsd * 0.18; // 18%
+  const vatUsd = vatBaseUsd * vatRate;
   const totalLandedUsd = cifUsd + cidUsd + palUsd + cessUsd + vatUsd;
   const totalLandedLkr = totalLandedUsd * exchangeRate;
 
@@ -36,18 +50,20 @@ export const TariffTable: React.FC<TariffTableProps> = ({
     {
       code: 'CIF',
       name: 'Cost, Insurance & Freight (Base Value)',
-      rate: 'FOB + Sea Freight',
+      rate: `${freightMode.toUpperCase()} FREIGHT`,
       usdAmount: cifUsd,
       lkrAmount: cifUsd * exchangeRate,
-      description: 'Assessable Value for Sri Lanka Customs ($25,000.00 FOB + $1,200.00 Sea)',
+      description: `Assessable Value for Sri Lanka Customs ($${fobTotalUsd.toLocaleString()} FOB + $${freightUsd.toLocaleString()} ${freightMode.toUpperCase()})`,
     },
     {
       code: 'CID',
       name: 'Customs Import Duty',
-      rate: '0%',
+      rate: `${intRate(cidRate)}%`,
       usdAmount: cidUsd,
       lkrAmount: cidUsd * exchangeRate,
-      description: 'Zero Duty Category under HS 5208.11.00 Raw Apparel Fabric Exception',
+      description: isZeroDutyHs
+        ? 'Zero Duty Category under HS 5208.11.00 Raw Apparel Fabric Exception'
+        : 'Standard Sri Lanka Customs Import Duty Rate',
     },
     {
       code: 'PAL',
@@ -55,7 +71,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
       rate: '10%',
       usdAmount: palUsd,
       lkrAmount: palUsd * exchangeRate,
-      description: 'Applied directly on CIF Value (10% of $26,200.00)',
+      description: `Applied directly on CIF Value (10% of $${cifUsd.toLocaleString()})`,
     },
     {
       code: 'CESS',
@@ -63,7 +79,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
       rate: '15%',
       usdAmount: cessUsd,
       lkrAmount: cessUsd * exchangeRate,
-      description: 'CESS Levy on Woven Cotton Fabric imports (15% of $26,200.00)',
+      description: `CESS Levy calculated at 15% of CIF Value ($${cifUsd.toLocaleString()})`,
     },
     {
       code: 'VAT',
@@ -71,13 +87,17 @@ export const TariffTable: React.FC<TariffTableProps> = ({
       rate: '18%',
       usdAmount: vatUsd,
       lkrAmount: vatUsd * exchangeRate,
-      description: '18% tax calculated on (CIF + CID + PAL + CESS) base = $32,750.00',
+      description: `18% tax calculated on composite base (CIF + CID + PAL + CESS) = $${vatBaseUsd.toLocaleString()}`,
     },
   ];
 
+  function intRate(val: number) {
+    return Math.round(val * 100);
+  }
+
   return (
     <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-      {/* Header Bar */}
+      {/* Header Bar with Freight Mode Switcher */}
       <div className="bg-slate-900 text-white p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center space-x-2">
@@ -85,17 +105,36 @@ export const TariffTable: React.FC<TariffTableProps> = ({
             <h3 className="text-lg font-bold text-white">Itemized Sri Lanka Duty Breakdown</h3>
           </div>
           <p className="text-xs text-slate-400 mt-1 font-medium">
-            HS Code: <span className="text-indigo-300 font-mono font-bold">5208.11.00</span> | Target Quantity: 2,000 Units
+            HS Code: <span className="text-indigo-300 font-mono font-bold">{hsCode}</span> — {hsDescription}
           </p>
         </div>
 
-        <div className="bg-slate-800/80 border border-slate-700/80 rounded-xl px-4 py-2 text-right">
-          <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
-            Anchor Exchange Rate
-          </span>
-          <span className="text-sm font-mono font-bold text-emerald-400">
-            1 USD = {exchangeRate} LKR
-          </span>
+        {/* Dynamic Freight Mode Switcher */}
+        <div className="flex items-center space-x-3">
+          <div className="bg-slate-800 p-1 rounded-xl flex items-center space-x-1 border border-slate-700 text-xs">
+            <button
+              onClick={() => onFreightModeChange && onFreightModeChange('sea')}
+              className={`px-3 py-1.5 rounded-lg flex items-center space-x-1.5 font-bold transition-all ${
+                freightMode === 'sea'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Ship className="w-3.5 h-3.5" />
+              <span>Sea ($1,200 / 14d)</span>
+            </button>
+            <button
+              onClick={() => onFreightModeChange && onFreightModeChange('air')}
+              className={`px-3 py-1.5 rounded-lg flex items-center space-x-1.5 font-bold transition-all ${
+                freightMode === 'air'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Plane className="w-3.5 h-3.5" />
+              <span>Air ($4,500 / 3d)</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -125,7 +164,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
                 <td className="py-4 px-4 text-center">
                   <span
                     className={`font-mono font-bold px-2 py-1 rounded text-[11px] ${
-                      duty.code === 'CID'
+                      duty.code === 'CID' && isZeroDutyHs
                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                         : 'bg-indigo-50 text-indigo-700'
                     }`}
@@ -153,10 +192,10 @@ export const TariffTable: React.FC<TariffTableProps> = ({
           </div>
           <div>
             <span className="text-xs font-extrabold uppercase text-indigo-900 tracking-wider">
-              Final Landed Cost Calculation
+              Final Landed Cost Calculation ({freightMode.toUpperCase()} FREIGHT)
             </span>
             <p className="text-xs text-indigo-700">
-              Includes FOB + Sea Freight + PAL (10%) + CESS (15%) + VAT (18%)
+              FOB (${fobTotalUsd.toLocaleString()}) + {freightMode.toUpperCase()} Freight + CID ({intRate(cidRate)}%) + PAL (10%) + CESS (15%) + VAT (18%)
             </p>
           </div>
         </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Eye, Layers, ZoomIn, ZoomOut, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Eye, Layers, ZoomIn, ZoomOut, CheckCircle2, ShieldCheck, Sparkles } from 'lucide-react';
 
 interface Hotspot {
   id: string;
@@ -13,6 +13,7 @@ interface Hotspot {
   height: string;
   value: string;
   confidence: string;
+  details: string;
 }
 
 export const CadViewer: React.FC = () => {
@@ -30,6 +31,7 @@ export const CadViewer: React.FC = () => {
       height: '18%',
       value: '220 GSM Organic Cotton Canvas',
       confidence: '99.4%',
+      details: 'Unbleached 100% Organic Weave. Complies with HS 5208.11.00 Zero-Duty Customs Category.',
     },
     {
       id: 'h2',
@@ -41,6 +43,7 @@ export const CadViewer: React.FC = () => {
       height: '32%',
       value: 'YKK #5 Brass Antiqued Zipper',
       confidence: '98.1%',
+      details: 'Heavy-duty antiqued brass finish with auto-lock slider. Tensile strength verified.',
     },
     {
       id: 'h3',
@@ -52,8 +55,11 @@ export const CadViewer: React.FC = () => {
       height: '12%',
       value: 'Tolerance: ±0.1mm Double Stitch',
       confidence: '97.8%',
+      details: 'Double needle reinforcement seam with high-density polyester core thread.',
     },
   ];
+
+  const currentHotspot = hotspots.find((h) => h.id === selectedHotspot) || hotspots[0];
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
@@ -67,7 +73,7 @@ export const CadViewer: React.FC = () => {
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Agent 01 Multimodal Vision Engine identified 3 critical production hotspots
+            Click hotspot pins on the CAD drawing to inspect parsed component specifications.
           </p>
         </div>
 
@@ -128,13 +134,13 @@ export const CadViewer: React.FC = () => {
                 }}
                 className={`absolute cursor-pointer border-2 transition-all rounded ${
                   isSelected
-                    ? 'border-indigo-400 bg-indigo-500/25 ring-4 ring-indigo-500/20 shadow-lg'
-                    : 'border-amber-400/80 bg-amber-400/10 hover:border-indigo-300 hover:bg-indigo-400/15'
+                    ? 'border-indigo-400 bg-indigo-500/30 ring-4 ring-indigo-500/30 shadow-xl scale-105 z-10'
+                    : 'border-amber-400/80 bg-amber-400/10 hover:border-indigo-300 hover:bg-indigo-400/20'
                 }`}
               >
                 <div
                   className={`absolute -top-3 -left-3 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black text-white ${
-                    isSelected ? 'bg-indigo-600 shadow-md scale-110' : 'bg-amber-500'
+                    isSelected ? 'bg-indigo-600 shadow-md scale-125' : 'bg-amber-500'
                   }`}
                 >
                   {hs.id.replace('h', '')}
@@ -148,8 +154,25 @@ export const CadViewer: React.FC = () => {
         </div>
       </div>
 
-      {/* Hotspots Breakdown Bar */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+      {/* Active Hotspot Inspector Card with Smooth Transition */}
+      <div className="mt-6 bg-gradient-to-r from-indigo-900 via-slate-900 to-slate-900 text-white p-5 rounded-2xl border border-indigo-950 shadow-md transition-all">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-mono font-bold text-indigo-300 uppercase tracking-widest flex items-center">
+            <Sparkles className="w-3.5 h-3.5 mr-1 text-indigo-400" />
+            Inspecting Hotspot #{currentHotspot.id.replace('h', '')}: {currentHotspot.category}
+          </span>
+          <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-700/60 px-2 py-0.5 rounded font-mono">
+            Vision Confidence {currentHotspot.confidence}
+          </span>
+        </div>
+        <h4 className="text-sm font-extrabold text-white">{currentHotspot.value}</h4>
+        <p className="text-xs text-slate-300 mt-1 leading-relaxed font-medium">
+          {currentHotspot.details}
+        </p>
+      </div>
+
+      {/* Hotspots Breakdown Grid */}
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
         {hotspots.map((hs) => {
           const isSelected = selectedHotspot === hs.id;
           return (
@@ -158,8 +181,8 @@ export const CadViewer: React.FC = () => {
               onClick={() => setSelectedHotspot(hs.id)}
               className={`p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
                 isSelected
-                  ? 'bg-indigo-50/80 border-indigo-300 shadow-xs ring-1 ring-indigo-200'
-                  : 'bg-slate-50 border-slate-200 hover:bg-slate-100/80'
+                  ? 'bg-indigo-50/90 border-indigo-400 shadow-sm ring-2 ring-indigo-200'
+                  : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
               }`}
             >
               <div className="flex items-center justify-between mb-1">

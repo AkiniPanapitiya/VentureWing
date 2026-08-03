@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import { SourcingProvider } from '@/context/SourcingContext';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -21,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable}`}>
       <body className="bg-slate-50 text-slate-900 min-h-screen font-sans flex flex-col antialiased">
-        {children}
+        <SourcingProvider>{children}</SourcingProvider>
       </body>
     </html>
   );

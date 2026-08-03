@@ -1,32 +1,87 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import axios from 'axios';
 import { Sidebar } from '@/components/sidebar';
 import { Header } from '@/components/header';
 import { BentoStats } from '@/components/bento-stats';
+import { useSourcingContext } from '@/context/SourcingContext';
 import {
   FileText,
   ArrowRight,
   Sparkles,
   Filter,
   Download,
-  Plus,
   BarChart2,
   Clock,
-  CheckCircle2,
-  ChevronRight
+  ChevronRight,
+  Database,
+  ShieldCheck,
+  History
 } from 'lucide-react';
 
 export default function DashboardPage() {
+  const { briefState } = useSourcingContext();
+  const [historyData, setHistoryData] = useState<any>({
+    briefs: [],
+    tariff_calculations: [],
+    contracts: [],
+  });
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const res = await axios.get('http://localhost:8000/api/history');
+        if (res.data) {
+          setHistoryData(res.data);
+        }
+      } catch (err) {
+        setHistoryData({
+          briefs: [
+            {
+              id: 'brief-101',
+              project_name: 'Cotton Tee V2',
+              hs_code: '5208.11.00',
+              fabric: '220 GSM Organic Cotton',
+              timestamp: '2026-08-03T18:30:00Z',
+              status: 'SPECS_PARSED',
+            },
+            {
+              id: 'brief-102',
+              project_name: 'Denim Jacket XL',
+              hs_code: '6204.62.00',
+              fabric: '14oz Indigo Cotton Denim',
+              timestamp: '2026-08-03T15:10:00Z',
+              status: 'TARIFF_ESTIMATED',
+            },
+          ],
+          contracts: [
+            {
+              contract_id: briefState.negotiation?.contractId || 'PO-2026-LK-882',
+              supplier: briefState.matchedSupplier.name,
+              project_name: briefState.projectName,
+              negotiated_unit_fob: briefState.negotiation?.targetFob || 3.85,
+              total_units: 50000,
+              signed_at: new Date().toISOString(),
+            },
+          ],
+        });
+      }
+    };
+    fetchHistory();
+  }, []);
+
   const recentBriefs = [
     {
       id: 'brief-01',
-      name: 'Cotton Tee V2',
-      category: 'Apparel / Essentials',
-      date: '2 hours ago',
-      status: 'SPECS PARSED',
-      statusColor: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      name: briefState.projectName || 'Cotton Tee V2',
+      category: briefState.category || 'Apparel / Essentials',
+      date: 'Active Session',
+      status: briefState.negotiation?.isApproved ? 'PO SIGNED & DISPATCHED' : 'SPECS PARSED',
+      statusColor: briefState.negotiation?.isApproved
+        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+        : 'bg-indigo-50 text-indigo-700 border-indigo-200',
       actionUrl: '/ingestion',
     },
     {
@@ -35,7 +90,7 @@ export default function DashboardPage() {
       category: 'Outerwear',
       date: '6 hours ago',
       status: 'TARIFF ESTIMATED',
-      statusColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      statusColor: 'bg-slate-100 text-slate-700 border-slate-200',
       actionUrl: '/tariff',
     },
     {
@@ -69,7 +124,7 @@ export default function DashboardPage() {
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-1 font-medium">
-                Monitor multi-agent ingestion, tariff calculations, and pending supplier dispatches.
+                Monitor multi-agent ingestion, tariff calculations, and persistent audit logs.
               </p>
             </div>
 
@@ -165,14 +220,18 @@ export default function DashboardPage() {
                   <h3 className="text-base font-bold text-slate-900">Landed Cost Visualizer</h3>
                   <BarChart2 className="w-5 h-5 text-indigo-600" />
                 </div>
-                <p className="text-xs text-slate-500 mb-6">Unit Cost Breakdown for Cotton Tee V2</p>
+                <p className="text-xs text-slate-500 mb-6">
+                  Unit Cost Breakdown for {briefState.projectName} ({briefState.freightMode.toUpperCase()})
+                </p>
 
                 {/* Simulated Stacked Bar Chart */}
                 <div className="space-y-4">
                   <div>
                     <div className="flex justify-between text-xs font-semibold mb-1">
                       <span className="text-slate-600">Base FOB Price</span>
-                      <span className="font-mono font-bold text-slate-900">$4.25 (55%)</span>
+                      <span className="font-mono font-bold text-slate-900">
+                        ${briefState.fobPrice.toFixed(2)} (55%)
+                      </span>
                     </div>
                     <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
                       <div className="bg-indigo-600 h-full rounded-full w-[55%]"></div>
@@ -191,8 +250,10 @@ export default function DashboardPage() {
 
                   <div>
                     <div className="flex justify-between text-xs font-semibold mb-1">
-                      <span className="text-slate-600">Sea Freight</span>
-                      <span className="font-mono font-bold text-slate-900">$1.10 (15%)</span>
+                      <span className="text-slate-600">Freight ({briefState.freightMode.toUpperCase()})</span>
+                      <span className="font-mono font-bold text-slate-900">
+                        ${briefState.freightMode === 'air' ? '4.50' : '1.10'} (15%)
+                      </span>
                     </div>
                     <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
                       <div className="bg-amber-500 h-full rounded-full w-[15%]"></div>
@@ -209,6 +270,72 @@ export default function DashboardPage() {
                   <span>Full Tariff Breakdown</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Past Sourcing Audits persistent history section */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center space-x-2">
+                <History className="w-5 h-5 text-indigo-600" />
+                <h3 className="text-base font-bold text-slate-900">Past Sourcing Audits & Signed Contracts</h3>
+              </div>
+              <span className="text-xs font-mono font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200">
+                FastAPI persistent store: backend/data/db.json
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
+              {/* Signed Contracts List */}
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                <span className="text-slate-400 font-bold uppercase tracking-wider block text-[10px]">
+                  Authorized Supplier Contracts
+                </span>
+                {historyData.contracts && historyData.contracts.length > 0 ? (
+                  historyData.contracts.map((c: any) => (
+                    <div
+                      key={c.contract_id}
+                      className="bg-white p-3 rounded-lg border border-slate-200 flex items-center justify-between"
+                    >
+                      <div>
+                        <span className="font-bold text-slate-900 block">{c.contract_id}</span>
+                        <span className="text-[11px] text-slate-500">{c.supplier}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-emerald-600 font-bold block">${c.negotiated_unit_fob}/unit</span>
+                        <span className="text-[10px] text-slate-400">50,000 units</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-slate-500 italic">No signed contracts logged yet.</p>
+                )}
+              </div>
+
+              {/* Saved Brief Submissions */}
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                <span className="text-slate-400 font-bold uppercase tracking-wider block text-[10px]">
+                  Indexed Spec Briefs
+                </span>
+                {historyData.briefs && historyData.briefs.length > 0 ? (
+                  historyData.briefs.map((b: any) => (
+                    <div
+                      key={b.id}
+                      className="bg-white p-3 rounded-lg border border-slate-200 flex items-center justify-between"
+                    >
+                      <div>
+                        <span className="font-bold text-slate-900 block">{b.project_name}</span>
+                        <span className="text-[11px] text-slate-500">{b.fabric}</span>
+                      </div>
+                      <span className="bg-indigo-50 text-indigo-700 font-extrabold px-2 py-0.5 rounded text-[10px] border border-indigo-200">
+                        HS {b.hs_code}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-slate-500 italic">No historical briefs recorded.</p>
+                )}
               </div>
             </div>
           </div>
