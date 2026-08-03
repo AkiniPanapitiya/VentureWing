@@ -23,14 +23,14 @@ export default function TeamPage() {
       name: 'Panapitiya P.D.A.S.',
       institution: 'SLIIT',
       role: 'System Architect',
-      focus: 'Distributed Systems & FastAPI Agent Infrastructure',
+      focus: 'Distributed Systems, SQLite DB Schema & FastAPI Agent Infrastructure',
       avatarColor: 'bg-indigo-600',
     },
     {
       name: 'Sammandapperuma S.M.A.D.V.',
       institution: 'NIBM',
       role: 'Full-Stack Engineer',
-      focus: 'Next.js 14 App Router & Figma Design System Implementation',
+      focus: 'Next.js 14 App Router, Global Sourcing Context & SQLite UI Bindings',
       avatarColor: 'bg-emerald-600',
     },
     {
@@ -53,12 +53,17 @@ export default function TeamPage() {
     {
       layer: 'Frontend Web App',
       tech: 'Next.js 14 (App Router), TypeScript, Tailwind CSS, Lucide React, Axios',
-      purpose: 'Multi-page responsive B2B SaaS dashboard with 280px sidebar layout',
+      purpose: 'Multi-page responsive B2B SaaS dashboard with 280px sidebar & Global Context',
     },
     {
       layer: 'Backend Application Server',
       tech: 'Python 3.10+, FastAPI, Uvicorn, Pydantic',
-      purpose: 'REST API endpoints for Agent 01, Agent 02, and Agent 03 workflows',
+      purpose: 'REST API endpoints & SSE real-time thought process streaming',
+    },
+    {
+      layer: 'Relational Database Store',
+      tech: 'SQLite (venturewing.db) & SQLAlchemy ORM',
+      purpose: 'Persistent storage for Projects, TechSpecs, TariffCalculations & NegotiationContracts',
     },
     {
       layer: 'Multimodal AI Models',
@@ -68,12 +73,12 @@ export default function TeamPage() {
     {
       layer: 'Customs Tax Vector Index',
       tech: 'Local JSON Vector Store (sl_customs_tariffs.json) / Pinecone',
-      purpose: 'Sri Lanka Customs HS Code 5208.11.00 tariff retrieval (CID, PAL, CESS, VAT)',
+      purpose: 'Sri Lanka Customs HS Code tariff retrieval (CID 0%, PAL 10%, CESS 15%, VAT 18%)',
     },
     {
       layer: 'Human-In-The-Loop Safety Gate',
       tech: 'Strict FastAPI Authorization Middleware (/api/agent3/approve)',
-      purpose: 'Prevents unauthorized outbound dispatches to suppliers',
+      purpose: 'Prevents unauthorized outbound dispatches to suppliers with digital sign-off',
     },
   ];
 
