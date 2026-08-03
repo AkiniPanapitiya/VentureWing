@@ -18,91 +18,70 @@ import {
   ChevronRight,
   Database,
   ShieldCheck,
-  History
+  History,
+  FolderGit2
 } from 'lucide-react';
 
 export default function DashboardPage() {
   const { briefState } = useSourcingContext();
+  const [dbProjects, setDbProjects] = useState<any[]>([]);
   const [historyData, setHistoryData] = useState<any>({
-    briefs: [],
-    tariff_calculations: [],
+    projects: [],
+    specs: [],
+    tariffs: [],
     contracts: [],
   });
 
-  useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const res = await axios.get('http://localhost:8000/api/history');
-        if (res.data) {
-          setHistoryData(res.data);
-        }
-      } catch (err) {
-        setHistoryData({
-          briefs: [
-            {
-              id: 'brief-101',
-              project_name: 'Cotton Tee V2',
-              hs_code: '5208.11.00',
-              fabric: '220 GSM Organic Cotton',
-              timestamp: '2026-08-03T18:30:00Z',
-              status: 'SPECS_PARSED',
-            },
-            {
-              id: 'brief-102',
-              project_name: 'Denim Jacket XL',
-              hs_code: '6204.62.00',
-              fabric: '14oz Indigo Cotton Denim',
-              timestamp: '2026-08-03T15:10:00Z',
-              status: 'TARIFF_ESTIMATED',
-            },
-          ],
-          contracts: [
-            {
-              contract_id: briefState.negotiation?.contractId || 'PO-2026-LK-882',
-              supplier: briefState.matchedSupplier.name,
-              project_name: briefState.projectName,
-              negotiated_unit_fob: briefState.negotiation?.targetFob || 3.85,
-              total_units: 50000,
-              signed_at: new Date().toISOString(),
-            },
-          ],
-        });
+  const fetchDbData = async () => {
+    try {
+      const projectsRes = await axios.get('http://localhost:8000/api/projects');
+      if (projectsRes.data) {
+        setDbProjects(projectsRes.data);
       }
-    };
-    fetchHistory();
-  }, []);
+      const historyRes = await axios.get('http://localhost:8000/api/history');
+      if (historyRes.data) {
+        setHistoryData(historyRes.data);
+      }
+    } catch (err) {
+      // Fallback mock
+      setDbProjects([
+        {
+          id: 1,
+          name: briefState.projectName || 'Cotton Tee V2',
+          category: briefState.category || 'Apparel / Essentials',
+          status: briefState.negotiation?.isApproved ? 'ORDERED' : 'PARSED',
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: 2,
+          name: 'Denim Jacket XL',
+          category: 'Outerwear',
+          status: 'CALCULATED',
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      setHistoryData({
+        projects: [
+          { id: 1, name: 'Cotton Tee V2', category: 'Apparel', status: 'ORDERED' },
+          { id: 2, name: 'Denim Jacket XL', category: 'Outerwear', status: 'CALCULATED' },
+        ],
+        contracts: [
+          {
+            id: 1,
+            po_number: briefState.negotiation?.contractId || 'PO-2026-LK-882',
+            supplier_name: briefState.matchedSupplier.name,
+            target_fob_usd: 3.85,
+            user_signature: briefState.negotiation?.userSignature || 'Kavindu Perera',
+            hitl_approved: true,
+          },
+        ],
+      });
+    }
+  };
 
-  const recentBriefs = [
-    {
-      id: 'brief-01',
-      name: briefState.projectName || 'Cotton Tee V2',
-      category: briefState.category || 'Apparel / Essentials',
-      date: 'Active Session',
-      status: briefState.negotiation?.isApproved ? 'PO SIGNED & DISPATCHED' : 'SPECS PARSED',
-      statusColor: briefState.negotiation?.isApproved
-        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-        : 'bg-indigo-50 text-indigo-700 border-indigo-200',
-      actionUrl: '/ingestion',
-    },
-    {
-      id: 'brief-02',
-      name: 'Denim Jacket XL',
-      category: 'Outerwear',
-      date: '6 hours ago',
-      status: 'TARIFF ESTIMATED',
-      statusColor: 'bg-slate-100 text-slate-700 border-slate-200',
-      actionUrl: '/tariff',
-    },
-    {
-      id: 'brief-03',
-      name: 'Linen Shirt Summer',
-      category: 'Essentials',
-      date: 'Yesterday',
-      status: 'AWAITING EMAIL APPROVAL',
-      statusColor: 'bg-amber-50 text-amber-800 border-amber-300',
-      actionUrl: '/outbox',
-    },
-  ];
+  useEffect(() => {
+    fetchDbData();
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -119,12 +98,13 @@ export default function DashboardPage() {
             <div>
               <div className="flex items-center space-x-2">
                 <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Workspace Command Center</h1>
-                <span className="bg-indigo-50 text-indigo-700 text-xs font-mono font-bold px-2.5 py-0.5 rounded-full border border-indigo-200">
-                  Live Dashboard
+                <span className="bg-indigo-50 text-indigo-700 text-xs font-mono font-bold px-2.5 py-0.5 rounded-full border border-indigo-200 flex items-center space-x-1">
+                  <Database className="w-3 h-3 text-indigo-600 mr-1" />
+                  <span>SQLite venturewing.db</span>
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-1 font-medium">
-                Monitor multi-agent ingestion, tariff calculations, and persistent audit logs.
+                Live multi-agent sourcing pipeline backed by SQLAlchemy relational database.
               </p>
             </div>
 
@@ -148,16 +128,19 @@ export default function DashboardPage() {
             <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">Recent Sourcing Briefs</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Active tech pack processing pipeline</p>
+                  <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
+                    <FolderGit2 className="w-4 h-4 text-indigo-600" />
+                    <span>Projects Database Table (`projects`)</span>
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Live SQL records queried from SQLite database</p>
                 </div>
 
                 <div className="flex items-center space-x-2">
-                  <button className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors">
-                    <Filter className="w-3.5 h-3.5" />
-                  </button>
-                  <button className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors">
-                    <Download className="w-3.5 h-3.5" />
+                  <button
+                    onClick={fetchDbData}
+                    className="px-2.5 py-1 text-slate-600 hover:bg-slate-100 rounded-lg border border-slate-200 text-xs font-mono font-bold transition-colors"
+                  >
+                    Sync DB
                   </button>
                 </div>
               </div>
@@ -167,39 +150,42 @@ export default function DashboardPage() {
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-50 text-slate-400 font-bold uppercase tracking-wider border-b border-slate-100">
                     <tr>
-                      <th className="py-3 px-4">Project Name</th>
-                      <th className="py-3 px-4">Last Activity</th>
-                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4">Project ID & Name</th>
+                      <th className="py-3 px-4">Category</th>
+                      <th className="py-3 px-4">DB Status</th>
                       <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {recentBriefs.map((brief) => (
-                      <tr key={brief.id} className="hover:bg-slate-50/80 transition-colors group">
+                    {dbProjects.map((p) => (
+                      <tr key={p.id} className="hover:bg-slate-50/80 transition-colors group">
                         <td className="py-4 px-4">
-                          <div className="font-bold text-slate-900 text-sm group-hover:text-indigo-600 transition-colors">
-                            {brief.name}
-                          </div>
-                          <div className="text-[11px] text-slate-500 mt-0.5 font-medium">
-                            {brief.category}
+                          <div className="flex items-center space-x-2">
+                            <span className="bg-slate-100 font-mono text-[10px] font-bold text-slate-600 px-1.5 py-0.5 rounded border border-slate-200">
+                              #{p.id}
+                            </span>
+                            <span className="font-bold text-slate-900 text-sm group-hover:text-indigo-600 transition-colors">
+                              {p.name}
+                            </span>
                           </div>
                         </td>
                         <td className="py-4 px-4 text-slate-500 font-medium">
-                          <div className="flex items-center space-x-1">
-                            <Clock className="w-3.5 h-3.5 text-slate-400" />
-                            <span>{brief.date}</span>
-                          </div>
+                          {p.category}
                         </td>
                         <td className="py-4 px-4">
                           <span
-                            className={`text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full border ${brief.statusColor}`}
+                            className={`text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full border ${
+                              p.status === 'ORDERED'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                            }`}
                           >
-                            {brief.status}
+                            {p.status}
                           </span>
                         </td>
                         <td className="py-4 px-4 text-right">
                           <Link
-                            href={brief.actionUrl}
+                            href={p.status === 'ORDERED' ? '/orders' : '/ingestion'}
                             className="inline-flex items-center space-x-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors"
                           >
                             <span>Inspect</span>
@@ -274,67 +260,67 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Past Sourcing Audits persistent history section */}
+          {/* SQLite Relational Database Audit Table Section */}
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center space-x-2">
                 <History className="w-5 h-5 text-indigo-600" />
-                <h3 className="text-base font-bold text-slate-900">Past Sourcing Audits & Signed Contracts</h3>
+                <h3 className="text-base font-bold text-slate-900">SQLite Database Audit Log (`venturewing.db`)</h3>
               </div>
               <span className="text-xs font-mono font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200">
-                FastAPI persistent store: backend/data/db.json
+                GET /api/history
               </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
-              {/* Signed Contracts List */}
+              {/* Signed Contracts List from SQLite */}
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
                 <span className="text-slate-400 font-bold uppercase tracking-wider block text-[10px]">
-                  Authorized Supplier Contracts
+                  Table: negotiation_contracts
                 </span>
                 {historyData.contracts && historyData.contracts.length > 0 ? (
                   historyData.contracts.map((c: any) => (
                     <div
-                      key={c.contract_id}
+                      key={c.id || c.po_number}
                       className="bg-white p-3 rounded-lg border border-slate-200 flex items-center justify-between"
                     >
                       <div>
-                        <span className="font-bold text-slate-900 block">{c.contract_id}</span>
-                        <span className="text-[11px] text-slate-500">{c.supplier}</span>
+                        <span className="font-bold text-slate-900 block">{c.po_number}</span>
+                        <span className="text-[11px] text-slate-500">Signed by: {c.user_signature}</span>
                       </div>
                       <div className="text-right">
-                        <span className="text-emerald-600 font-bold block">${c.negotiated_unit_fob}/unit</span>
-                        <span className="text-[10px] text-slate-400">50,000 units</span>
+                        <span className="text-emerald-600 font-bold block">${c.target_fob_usd}/unit</span>
+                        <span className="text-[10px] text-indigo-600 font-bold">APPROVED ✓</span>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <p className="text-slate-500 italic">No signed contracts logged yet.</p>
+                  <p className="text-slate-500 italic">No contract records in SQLite DB.</p>
                 )}
               </div>
 
-              {/* Saved Brief Submissions */}
+              {/* Indexed Tech Specs from SQLite */}
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
                 <span className="text-slate-400 font-bold uppercase tracking-wider block text-[10px]">
-                  Indexed Spec Briefs
+                  Table: tech_specs
                 </span>
-                {historyData.briefs && historyData.briefs.length > 0 ? (
-                  historyData.briefs.map((b: any) => (
+                {historyData.specs && historyData.specs.length > 0 ? (
+                  historyData.specs.map((s: any) => (
                     <div
-                      key={b.id}
+                      key={s.id}
                       className="bg-white p-3 rounded-lg border border-slate-200 flex items-center justify-between"
                     >
                       <div>
-                        <span className="font-bold text-slate-900 block">{b.project_name}</span>
-                        <span className="text-[11px] text-slate-500">{b.fabric}</span>
+                        <span className="font-bold text-slate-900 block">{s.fabric_type}</span>
+                        <span className="text-[11px] text-slate-500">{s.hardware}</span>
                       </div>
                       <span className="bg-indigo-50 text-indigo-700 font-extrabold px-2 py-0.5 rounded text-[10px] border border-indigo-200">
-                        HS {b.hs_code}
+                        HS {s.hs_code}
                       </span>
                     </div>
                   ))
                 ) : (
-                  <p className="text-slate-500 italic">No historical briefs recorded.</p>
+                  <p className="text-slate-500 italic">No spec records in SQLite DB.</p>
                 )}
               </div>
             </div>

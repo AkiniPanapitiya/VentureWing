@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export interface SourcingBriefState {
+  projectId: number;
   projectName: string;
   category: string;
   fabricType: string;
@@ -39,11 +40,13 @@ export interface SourcingBriefState {
     emailSubject: string;
     emailBody: string;
     isApproved: boolean;
-    contractId?: string;
+    userSignature: string;
+    contractId: string;
   };
 }
 
 const defaultState: SourcingBriefState = {
+  projectId: 1,
   projectName: 'Cotton Tee V2',
   category: 'Apparel / Essentials',
   fabricType: '220 GSM Organic Cotton Canvas',
@@ -80,6 +83,7 @@ const defaultState: SourcingBriefState = {
     emailBody:
       'Dear Zhejiang Apparel Tech Sales Team,\n\nWe propose a target FOB price of $3.85 USD for our initial 50,000 unit production run.',
     isApproved: false,
+    userSignature: 'Kavindu Perera',
     contractId: 'PO-2026-LK-882',
   },
 };
@@ -97,6 +101,7 @@ interface SourcingContextType {
   authorizeContract: (
     targetFob: number,
     contractId: string,
+    userSignature: string,
     emailSubject: string,
     emailBody: string
   ) => void;
@@ -153,6 +158,7 @@ export const SourcingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const authorizeContract = (
     targetFob: number,
     contractId: string,
+    userSignature: string,
     emailSubject: string,
     emailBody: string
   ) => {
@@ -164,6 +170,7 @@ export const SourcingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         emailSubject,
         emailBody,
         isApproved: true,
+        userSignature,
         contractId,
       },
     }));

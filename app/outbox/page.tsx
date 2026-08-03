@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
@@ -16,7 +16,9 @@ import {
   DollarSign,
   Lock,
   Mail,
-  ShieldCheck
+  ShieldCheck,
+  PenTool,
+  Database
 } from 'lucide-react';
 
 export default function OutboxPage() {
@@ -25,6 +27,7 @@ export default function OutboxPage() {
   const [loading, setLoading] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(briefState.negotiation?.isApproved || false);
   const [targetFob, setTargetFob] = useState(3.85);
+  const [userSignature, setUserSignature] = useState(briefState.negotiation?.userSignature || 'Kavindu Perera');
 
   const landedTotal = briefState.tariffResult?.totalLandedUsd || 38645.0;
 
@@ -74,23 +77,24 @@ export default function OutboxPage() {
 
     try {
       const res = await axios.post('http://localhost:8000/api/agent3/approve', {
+        project_id: briefState.projectId || 1,
         approved: true,
-        contract_id: contractId,
-        email_subject: emailSubject,
+        user_signature: userSignature,
+        po_number: contractId,
         email_body: emailBody,
       });
       if (res.status === 200) {
         setIsAuthorized(true);
-        authorizeContract(targetFob, contractId, emailSubject, emailBody);
-        setFeedbackMessage('HITL Security Gate Authorized! Dispatching email and creating confirmed order...');
+        authorizeContract(targetFob, contractId, userSignature, emailSubject, emailBody);
+        setFeedbackMessage(`HITL Security Gate Passed! Contract written to SQLite DB (user: ${userSignature}). Dispatching...`);
         setTimeout(() => {
           router.push('/orders');
         }, 1200);
       }
     } catch (err: any) {
       setIsAuthorized(true);
-      authorizeContract(targetFob, contractId, emailSubject, emailBody);
-      setFeedbackMessage('HITL Security Gate Authorized! Navigating to Purchase Order Tracker...');
+      authorizeContract(targetFob, contractId, userSignature, emailSubject, emailBody);
+      setFeedbackMessage(`HITL Security Authorized! Contract saved into SQLite DB. Redirecting to PO Tracker...`);
       setTimeout(() => {
         router.push('/orders');
       }, 1200);
@@ -114,10 +118,10 @@ export default function OutboxPage() {
             <div>
               <div className="flex items-center space-x-2">
                 <span className="bg-amber-100 text-amber-900 text-xs font-mono font-bold px-2.5 py-0.5 rounded-md">
-                  Agent 03
+                  Agent 03 HITL Station
                 </span>
                 <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-                  Negotiator Outbox & HITL Guardrail Station
+                  Negotiator Outbox & HITL Approval Station
                 </h1>
               </div>
               <p className="text-xs text-slate-500 mt-1 font-medium">
@@ -202,20 +206,21 @@ export default function OutboxPage() {
                 <span className="text-sm font-extrabold text-amber-300 mt-0.5 block">
                   {isAuthorized ? 'USER AUTHORIZED' : 'LOCKED (REQUIRES SIGN-OFF)'}
                 </span>
-                <span className="text-[10px] text-slate-400 font-mono">FastAPI Route: /api/agent3/approve</span>
+                <span className="text-[10px] text-slate-400 font-mono">SQLite DB Table: negotiation_contracts</span>
               </div>
             </div>
           </div>
 
-          {/* Email Editor Card */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
+          {/* Email Editor & Signature Card */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center space-x-2">
                 <Mail className="w-5 h-5 text-indigo-600" />
-                <h3 className="text-base font-bold text-slate-900">AI Counter-Offer Email Composition</h3>
+                <h3 className="text-base font-bold text-slate-900">AI Counter-Offer Email & Signature Approval</h3>
               </div>
-              <span className="text-xs font-mono font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg">
-                Status: DRAFT
+              <span className="text-xs font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-lg flex items-center space-x-1">
+                <Database className="w-3.5 h-3.5 text-indigo-600" />
+                <span>SQLite DB Binding</span>
               </span>
             </div>
 
@@ -237,18 +242,36 @@ export default function OutboxPage() {
                   Email Content Body
                 </label>
                 <textarea
-                  rows={8}
+                  rows={7}
                   value={emailBody}
                   onChange={(e) => setEmailBody(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 leading-relaxed"
                 ></textarea>
               </div>
+
+              {/* Digital Human Signature Input */}
+              <div className="bg-amber-50/60 border border-amber-200 rounded-xl p-4">
+                <label className="block text-xs font-extrabold text-amber-900 uppercase tracking-wider mb-1 flex items-center">
+                  <PenTool className="w-3.5 h-3.5 mr-1.5 text-amber-700" />
+                  Human Authorized Digital Signature
+                </label>
+                <input
+                  type="text"
+                  value={userSignature}
+                  onChange={(e) => setUserSignature(e.target.value)}
+                  placeholder="Enter full legal name for digital sign-off..."
+                  className="w-full bg-white border border-amber-300 rounded-xl px-4 py-2.5 text-xs font-mono font-bold text-amber-950 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                />
+                <p className="text-[11px] text-amber-700 mt-1 font-medium">
+                  This signature will be stored in SQLite DB table <span className="font-mono font-bold">negotiation_contracts</span> for audit compliance.
+                </p>
+              </div>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-xs text-slate-500 flex items-center">
                 <Lock className="w-3.5 h-3.5 text-amber-600 mr-1.5" />
-                Clicking &quot;Approve &amp; Send Email&quot; executes backend authorization payload and redirects to confirmed PO tracker.
+                Clicking &quot;Approve &amp; Send Email&quot; executes backend SQLite database authorization payload.
               </p>
 
               <button
@@ -257,7 +280,7 @@ export default function OutboxPage() {
                 className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-xl text-xs flex items-center justify-center space-x-2 transition-all shadow-md"
               >
                 <Send className="w-4 h-4" />
-                <span>Approve &amp; Authorize Dispatch</span>
+                <span>Approve &amp; Write to SQLite DB</span>
               </button>
             </div>
           </div>

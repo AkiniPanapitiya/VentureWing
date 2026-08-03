@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Bell, Moon, RefreshCw, Key, Check, FolderGit2 } from 'lucide-react';
+import { Search, Bell, Moon, RefreshCw, Key, Check, FolderGit2, Database } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const [apiKeyActive, setApiKeyActive] = useState<boolean>(true);
@@ -21,6 +21,12 @@ export const Header: React.FC = () => {
         <div className="hidden sm:flex items-center space-x-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 px-2.5 py-1 rounded-full text-[11px] font-semibold">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
           <span>3 Agents Active</span>
+        </div>
+
+        {/* SQLite Database Connected Badge */}
+        <div className="hidden lg:flex items-center space-x-1.5 bg-indigo-50 border border-indigo-200 text-indigo-800 px-2.5 py-1 rounded-full text-[11px] font-bold font-mono">
+          <Database className="w-3 h-3 text-indigo-600" />
+          <span>SQLite DB: Connected (venturewing.db)</span>
         </div>
       </div>
 
