@@ -1,0 +1,45 @@
+{
+  "briefs": [
+    {
+      "id": "brief-101",
+      "project_name": "Cotton Tee V2",
+      "hs_code": "5208.11.00",
+      "fabric": "220 GSM Organic Cotton",
+      "timestamp": "2026-08-03T18:30:00Z",
+      "status": "SPECS_PARSED"
+    },
+    {
+      "id": "brief-102",
+      "project_name": "Denim Jacket XL",
+      "hs_code": "6204.62.00",
+      "fabric": "14oz Indigo Cotton Denim",
+      "timestamp": "2026-08-03T15:10:00Z",
+      "status": "TARIFF_ESTIMATED"
+    }
+  ],
+  "tariff_calculations": [
+    {
+      "id": "tariff-501",
+      "brief_id": "brief-101",
+      "hs_code": "5208.11.00",
+      "fob_usd": 25000.0,
+      "freight_mode": "sea",
+      "freight_usd": 1200.0,
+      "total_landed_usd": 38645.0,
+      "total_landed_lkr": 11997340.25,
+      "timestamp": "2026-08-03T18:35:00Z"
+    }
+  ],
+  "contracts": [
+    {
+      "contract_id": "PO-2026-LK-882",
+      "supplier": "Zhejiang Apparel Tech Co.",
+      "project_name": "Cotton Tee V2",
+      "negotiated_unit_fob": 3.85,
+      "total_units": 50000,
+      "total_contract_usd": 621000.0,
+      "hitl_approved_by": "User Admin",
+      "signed_at": "2026-08-03T21:45:00Z"
+    }
+  ]
+}

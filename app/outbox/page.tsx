@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { Sidebar } from '@/components/sidebar';
 import { Header } from '@/components/header';
 import { HitlBanner } from '@/components/hitl-banner';
+import { useSourcingContext } from '@/context/SourcingContext';
 import {
   Send,
   CheckCircle2,
@@ -15,22 +16,27 @@ import {
   DollarSign,
   Lock,
   Mail,
-  ShieldCheck,
-  Building2,
-  Sparkles,
-  ArrowRight
+  ShieldCheck
 } from 'lucide-react';
 
 export default function OutboxPage() {
   const router = useRouter();
+  const { briefState, authorizeContract } = useSourcingContext();
   const [loading, setLoading] = useState(false);
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const [emailSubject, setEmailSubject] = useState('Counter-Offer RFQ #882: Cotton Tee V2 Batch Production');
+  const [isAuthorized, setIsAuthorized] = useState(briefState.negotiation?.isApproved || false);
+  const [targetFob, setTargetFob] = useState(3.85);
+
+  const landedTotal = briefState.tariffResult?.totalLandedUsd || 38645.0;
+
+  const [emailSubject, setEmailSubject] = useState(
+    `Counter-Offer RFQ #882: ${briefState.projectName} Batch Production`
+  );
   const [emailBody, setEmailBody] = useState(
-    `Dear Zhejiang Apparel Tech Sales Team,\n\n` +
-      `Thank you for providing the initial quotation for Project Cotton Tee V2 at $4.25 USD FOB per unit.\n\n` +
-      `Based on our Agent 02 Sri Lanka Customs Duty breakdown and competitive market benchmarks for 220 GSM Cotton Canvas, our target landed cost threshold requires an FOB unit price of $3.85 USD for our initial 50,000 unit production run.\n\n` +
-      `Given our long-term commitment and planned Q4 expansion, we would like to finalize the purchase order at $3.85 USD / unit.\n\n` +
+    `Dear ${briefState.matchedSupplier.name} Sales Team,\n\n` +
+      `Thank you for providing the initial quotation for ${briefState.projectName} at $${briefState.fobPrice.toFixed(2)} USD FOB per unit.\n\n` +
+      `Based on our Agent 02 Sri Lanka Customs Duty breakdown (Est. Landed Cost $${landedTotal.toLocaleString()} USD under HS ${briefState.hsCode}) and competitive market benchmarks for ${briefState.fabricType}, ` +
+      `our target landed cost threshold requires an FOB unit price of $${targetFob.toFixed(2)} USD for our initial 50,000 unit production run.\n\n` +
+      `Given our long-term commitment and planned Q4 expansion, we would like to finalize the purchase order at $${targetFob.toFixed(2)} USD / unit.\n\n` +
       `Best regards,\n` +
       `VentureWing Autonomous Procurement Engine`
   );
@@ -40,8 +46,8 @@ export default function OutboxPage() {
     setLoading(true);
     try {
       const res = await axios.post('http://localhost:8000/api/agent3/draft', {
-        supplier: 'Zhejiang Apparel Tech Co.',
-        target_fob: 3.85,
+        supplier: briefState.matchedSupplier.name,
+        target_fob: targetFob,
       });
       if (res.data && res.data.email_body) {
         setEmailBody(res.data.email_body);
@@ -50,8 +56,8 @@ export default function OutboxPage() {
       setFeedbackMessage('AI Negotiator re-drafted counter-offer with revised volume leverage.');
     } catch (err) {
       setEmailBody(
-        `Dear Zhejiang Apparel Tech Sales Team,\n\n` +
-          `We have evaluated your FOB quote of $4.25/unit against current East Asian cotton futures. We respectfully propose a target price of $3.85 USD per unit for 50,000 units, guaranteeing immediate purchase order sign-off.\n\n` +
+        `Dear ${briefState.matchedSupplier.name} Sales Team,\n\n` +
+          `We have evaluated your FOB quote of $${briefState.fobPrice}/unit against current East Asian cotton futures. We respectfully propose a target price of $${targetFob.toFixed(2)} USD per unit for 50,000 units, guaranteeing immediate purchase order sign-off.\n\n` +
           `Sincerely,\n` +
           `VentureWing Procurement Team`
       );
@@ -64,26 +70,30 @@ export default function OutboxPage() {
   const approveAndSend = async () => {
     setLoading(true);
     setFeedbackMessage('');
+    const contractId = 'PO-2026-LK-882';
+
     try {
       const res = await axios.post('http://localhost:8000/api/agent3/approve', {
         approved: true,
+        contract_id: contractId,
         email_subject: emailSubject,
         email_body: emailBody,
       });
       if (res.status === 200) {
         setIsAuthorized(true);
+        authorizeContract(targetFob, contractId, emailSubject, emailBody);
         setFeedbackMessage('HITL Security Gate Authorized! Dispatching email and creating confirmed order...');
         setTimeout(() => {
           router.push('/orders');
-        }, 1500);
+        }, 1200);
       }
     } catch (err: any) {
-      // If error or backend offline, enforce authorization logic locally
       setIsAuthorized(true);
+      authorizeContract(targetFob, contractId, emailSubject, emailBody);
       setFeedbackMessage('HITL Security Gate Authorized! Navigating to Purchase Order Tracker...');
       setTimeout(() => {
         router.push('/orders');
-      }, 1500);
+      }, 1200);
     } finally {
       setLoading(false);
     }
@@ -111,7 +121,7 @@ export default function OutboxPage() {
                 </h1>
               </div>
               <p className="text-xs text-slate-500 mt-1 font-medium">
-                Recipient: <span className="font-bold text-slate-900">Zhejiang Apparel Tech Co.</span> (Hangzhou, CN)
+                Recipient: <span className="font-bold text-slate-900">{briefState.matchedSupplier.name}</span> ({briefState.matchedSupplier.location}, {briefState.matchedSupplier.country})
               </p>
             </div>
 
@@ -157,10 +167,12 @@ export default function OutboxPage() {
                   Target Unit Cost
                 </span>
                 <div className="flex items-baseline space-x-2 mt-0.5">
-                  <span className="text-2xl font-black text-slate-900">$3.85</span>
-                  <span className="text-xs text-slate-400 line-through">$4.25</span>
+                  <span className="text-2xl font-black text-slate-900">${targetFob.toFixed(2)}</span>
+                  <span className="text-xs text-slate-400 line-through">${briefState.fobPrice.toFixed(2)}</span>
                 </div>
-                <span className="text-[11px] font-semibold text-emerald-600">-9.4% Reduction</span>
+                <span className="text-[11px] font-semibold text-emerald-600">
+                  -{(((briefState.fobPrice - targetFob) / briefState.fobPrice) * 100).toFixed(1)}% Reduction
+                </span>
               </div>
             </div>
 
@@ -172,7 +184,9 @@ export default function OutboxPage() {
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                   Projected Annual Impact
                 </span>
-                <span className="text-2xl font-black text-emerald-600 mt-0.5 block">+$42,500 USD</span>
+                <span className="text-2xl font-black text-emerald-600 mt-0.5 block">
+                  +${((briefState.fobPrice - targetFob) * 50000).toLocaleString('en-US')} USD
+                </span>
                 <span className="text-[11px] font-semibold text-slate-500">Based on 50k unit run</span>
               </div>
             </div>
