@@ -17,6 +17,7 @@ export interface SourcingBriefState {
   freightMode: 'sea' | 'air';
   freightUsd: number;
   exchangeRate: number;
+  parsedHsCode?: string;
   matchedSupplier: {
     id: string;
     name: string;
@@ -54,6 +55,7 @@ const defaultState: SourcingBriefState = {
   zipper: 'YKK #5 Brass Antiqued',
   stitchingTolerance: '±0.1mm',
   hsCode: '5208.11.00',
+  parsedHsCode: '5208.11.00',
   hsDescription: 'Woven fabrics of cotton, unbleached, weight <= 200g/m2',
   fobPrice: 4.25,
   quantity: 2000,
@@ -91,6 +93,9 @@ const defaultState: SourcingBriefState = {
 interface SourcingContextType {
   briefState: SourcingBriefState;
   updateIngestionSpecs: (specs: Partial<SourcingBriefState>) => void;
+  updateParsedSpecs: (specs: any) => void;
+  setSelectedSupplier: (supplier: any) => void;
+  setLandedCostCalculation: (calc: any) => void;
   updateTariffCalculation: (
     hsCode: string,
     hsDescription: string,
@@ -138,6 +143,50 @@ export const SourcingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }));
   };
 
+  const updateParsedSpecs = (specs: any) => {
+    setBriefState((prev) => ({
+      ...prev,
+      fabricType: specs.fabricType || prev.fabricType,
+      gsm: specs.gsm || prev.gsm,
+      zipper: specs.zipper || prev.zipper,
+      stitchingTolerance: specs.stitchingTolerance || prev.stitchingTolerance,
+      hsCode: specs.parsedHsCode || specs.hsCode || prev.hsCode,
+      parsedHsCode: specs.parsedHsCode || specs.hsCode || prev.hsCode,
+    }));
+  };
+
+  const setSelectedSupplier = (supplier: any) => {
+    setBriefState((prev) => ({
+      ...prev,
+      matchedSupplier: {
+        id: String(supplier.id || 'supplier'),
+        name: supplier.name || 'Supplier',
+        country: supplier.country || 'China',
+        location: supplier.location || 'Hangzhou',
+        matchScore: supplier.matchScore || supplier.match_score || 90,
+        isZeroDuty: supplier.isZeroDuty || supplier.is_zero_duty || false,
+      },
+      fobPrice: supplier.fobPrice || supplier.fob_price || prev.fobPrice,
+    }));
+  };
+
+  const setLandedCostCalculation = (calc: any) => {
+    setBriefState((prev) => ({
+      ...prev,
+      hsCode: calc.hs_code || calc.hsCode || prev.hsCode,
+      parsedHsCode: calc.hs_code || calc.hsCode || prev.parsedHsCode,
+      tariffResult: {
+        cifUsd: calc.cif_usd || calc.cifUsd || 0,
+        cidUsd: calc.cid_usd || calc.cidUsd || 0,
+        palUsd: calc.pal_usd || calc.palUsd || 0,
+        cessUsd: calc.cess_usd || calc.cessUsd || 0,
+        vatUsd: calc.vat_usd || calc.vatUsd || 0,
+        totalLandedUsd: calc.total_landed_usd || calc.totalLandedUsd || 0,
+        totalLandedLkr: calc.total_landed_lkr || calc.totalLandedLkr || 0,
+      },
+    }));
+  };
+
   const updateTariffCalculation = (
     hsCode: string,
     hsDescription: string,
@@ -148,6 +197,7 @@ export const SourcingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setBriefState((prev) => ({
       ...prev,
       hsCode,
+      parsedHsCode: hsCode,
       hsDescription,
       freightMode,
       freightUsd,
@@ -185,6 +235,9 @@ export const SourcingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       value={{
         briefState,
         updateIngestionSpecs,
+        updateParsedSpecs,
+        setSelectedSupplier,
+        setLandedCostCalculation,
         updateTariffCalculation,
         authorizeContract,
         resetToDefaults,

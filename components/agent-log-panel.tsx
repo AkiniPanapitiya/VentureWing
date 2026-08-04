@@ -6,6 +6,7 @@ import { Terminal, Database, Cpu, Check, Copy, ChevronRight, Activity } from 'lu
 export interface AgentLogPanelProps {
   title?: string;
   agentName?: string;
+  logs?: string[];
   jsonData?: Record<string, any>;
   vectorConfidence?: number;
   activeRules?: string[];
@@ -14,6 +15,7 @@ export interface AgentLogPanelProps {
 export const AgentLogPanel: React.FC<AgentLogPanelProps> = ({
   title = 'Agent Execution & Vector RAG Inspector',
   agentName = 'Agent 01: Multimodal Vision Parser',
+  logs,
   jsonData = {
     fabric_type: 'Cotton Canvas',
     gsm: 220,
@@ -33,10 +35,11 @@ export const AgentLogPanel: React.FC<AgentLogPanelProps> = ({
   ],
 }) => {
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<'json' | 'rules'>('json');
+  const [activeTab, setActiveTab] = useState<'logs' | 'json' | 'rules'>(logs && logs.length > 0 ? 'logs' : 'json');
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(JSON.stringify(jsonData, null, 2));
+    const textToCopy = activeTab === 'logs' && logs ? logs.join('\n') : JSON.stringify(jsonData, null, 2);
+    navigator.clipboard.writeText(textToCopy);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -65,6 +68,19 @@ export const AgentLogPanel: React.FC<AgentLogPanelProps> = ({
 
         {/* Tab Switcher */}
         <div className="flex items-center space-x-2 bg-slate-800 p-1 rounded-xl text-xs font-mono">
+          {logs && (
+            <button
+              onClick={() => setActiveTab('logs')}
+              className={`px-3 py-1.5 rounded-lg transition-colors flex items-center space-x-1.5 ${
+                activeTab === 'logs'
+                  ? 'bg-indigo-600 text-white font-bold'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5" />
+              <span>Live Logs</span>
+            </button>
+          )}
           <button
             onClick={() => setActiveTab('json')}
             className={`px-3 py-1.5 rounded-lg transition-colors flex items-center space-x-1.5 ${
@@ -92,7 +108,23 @@ export const AgentLogPanel: React.FC<AgentLogPanelProps> = ({
 
       {/* Panel Content */}
       <div className="mt-4">
-        {activeTab === 'json' ? (
+        {activeTab === 'logs' && logs ? (
+          <div className="relative bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-xs overflow-x-auto max-h-64 space-y-1.5">
+            <button
+              onClick={handleCopy}
+              className="absolute right-3 top-3 p-1.5 bg-slate-800 hover:bg-slate-700 rounded text-slate-300 hover:text-white transition-colors z-10"
+              title="Copy Logs"
+            >
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+            </button>
+            {logs.map((line, idx) => (
+              <div key={idx} className="text-emerald-400 flex items-start space-x-2">
+                <ChevronRight className="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5" />
+                <span>{line}</span>
+              </div>
+            ))}
+          </div>
+        ) : activeTab === 'json' ? (
           <div className="relative bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-xs overflow-x-auto">
             <button
               onClick={handleCopy}
