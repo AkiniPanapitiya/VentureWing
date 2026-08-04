@@ -2,16 +2,13 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { SourcingProvider } from '@/context/SourcingContext';
+import { AuthProvider } from '@/context/AuthContext';
 
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-});
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'VentureWing | Autonomous Global Sourcing & Sri Lanka Customs Intelligence',
-  description: 'AI-powered B2B procurement platform for boutique brands, calculating real-time Sri Lanka tariffs and negotiating directly with suppliers.',
+  title: 'VentureWing — Autonomous B2B Sourcing & Sri Lanka Customs Intelligence',
+  description: 'Team Aviate submission for IDEALIZE 2026 Hackathon Open Category',
 };
 
 export default function RootLayout({
@@ -20,9 +17,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable}`}>
-      <body className="bg-slate-50 text-slate-900 min-h-screen font-sans flex flex-col antialiased">
-        <SourcingProvider>{children}</SourcingProvider>
+    <html lang="en" className="h-full bg-slate-50">
+      <body className={`${inter.className} min-h-screen antialiased text-slate-900 bg-slate-50`}>
+        <AuthProvider>
+          <SourcingProvider>
+            {children}
+          </SourcingProvider>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -13,6 +13,34 @@ export interface DutyItem {
 }
 
 export interface TariffTableProps {
+  calculation?: {
+    hsCode?: string;
+    hs_code?: string;
+    hsDescription?: string;
+    description?: string;
+    fobTotalUsd?: number;
+    base_fob_usd?: number;
+    freightMode?: 'sea' | 'air';
+    freight_mode?: 'sea' | 'air';
+    freightUsd?: number;
+    freight_usd?: number;
+    cifUsd?: number;
+    cif_usd?: number;
+    cidUsd?: number;
+    cid_usd?: number;
+    palUsd?: number;
+    pal_usd?: number;
+    cessUsd?: number;
+    cess_usd?: number;
+    vatUsd?: number;
+    vat_usd?: number;
+    totalLandedUsd?: number;
+    total_landed_usd?: number;
+    totalLandedLkr?: number;
+    total_landed_lkr?: number;
+    tariffNote?: string;
+    tariff_note?: string;
+  };
   hsCode?: string;
   hsDescription?: string;
   fobTotalUsd?: number;
@@ -22,29 +50,30 @@ export interface TariffTableProps {
   onFreightModeChange?: (mode: 'sea' | 'air') => void;
 }
 
-export const TariffTable: React.FC<TariffTableProps> = ({
-  hsCode = '5208.11.00',
-  hsDescription = 'Woven fabrics of cotton, unbleached, weight <= 200g/m2',
-  fobTotalUsd = 25000.0,
-  freightMode = 'sea',
-  freightUsd = 1200.0,
-  exchangeRate = 310.45,
-  onFreightModeChange,
-}) => {
+export const TariffTable: React.FC<TariffTableProps> = (props) => {
+  const calc = props.calculation;
+
+  const hsCode = calc?.hsCode || calc?.hs_code || props.hsCode || '5208.11.00';
+  const hsDescription = calc?.hsDescription || calc?.description || props.hsDescription || 'Woven fabrics of cotton, unbleached, weight <= 200g/m2';
+  const fobTotalUsd = calc?.fobTotalUsd || calc?.base_fob_usd || props.fobTotalUsd || 8500.0;
+  const freightMode = (calc?.freightMode || calc?.freight_mode || props.freightMode || 'sea') as 'sea' | 'air';
+  const freightUsd = calc?.freightUsd || calc?.freight_usd || props.freightUsd || 1200.0;
+  const exchangeRate = props.exchangeRate || 310.45;
+
   const isZeroDutyHs = hsCode === '5208.11.00';
   const cidRate = isZeroDutyHs ? 0.0 : 0.15;
   const palRate = 0.10;
   const cessRate = 0.15;
   const vatRate = 0.18;
 
-  const cifUsd = fobTotalUsd + freightUsd;
-  const cidUsd = cifUsd * cidRate;
-  const palUsd = cifUsd * palRate;
-  const cessUsd = cifUsd * cessRate;
+  const cifUsd = calc?.cifUsd || calc?.cif_usd || (fobTotalUsd + freightUsd);
+  const cidUsd = calc?.cidUsd || calc?.cid_usd || (cifUsd * cidRate);
+  const palUsd = calc?.palUsd || calc?.pal_usd || (cifUsd * palRate);
+  const cessUsd = calc?.cessUsd || calc?.cess_usd || (cifUsd * cessRate);
   const vatBaseUsd = cifUsd + cidUsd + palUsd + cessUsd;
-  const vatUsd = vatBaseUsd * vatRate;
-  const totalLandedUsd = cifUsd + cidUsd + palUsd + cessUsd + vatUsd;
-  const totalLandedLkr = totalLandedUsd * exchangeRate;
+  const vatUsd = calc?.vatUsd || calc?.vat_usd || (vatBaseUsd * vatRate);
+  const totalLandedUsd = calc?.totalLandedUsd || calc?.total_landed_usd || (cifUsd + cidUsd + palUsd + cessUsd + vatUsd);
+  const totalLandedLkr = calc?.totalLandedLkr || calc?.total_landed_lkr || (totalLandedUsd * exchangeRate);
 
   const duties: DutyItem[] = [
     {
@@ -113,7 +142,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
         <div className="flex items-center space-x-3">
           <div className="bg-slate-800 p-1 rounded-xl flex items-center space-x-1 border border-slate-700 text-xs">
             <button
-              onClick={() => onFreightModeChange && onFreightModeChange('sea')}
+              onClick={() => props.onFreightModeChange && props.onFreightModeChange('sea')}
               className={`px-3 py-1.5 rounded-lg flex items-center space-x-1.5 font-bold transition-all ${
                 freightMode === 'sea'
                   ? 'bg-indigo-600 text-white shadow-xs'
@@ -124,7 +153,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
               <span>Sea ($1,200 / 14d)</span>
             </button>
             <button
-              onClick={() => onFreightModeChange && onFreightModeChange('air')}
+              onClick={() => props.onFreightModeChange && props.onFreightModeChange('air')}
               className={`px-3 py-1.5 rounded-lg flex items-center space-x-1.5 font-bold transition-all ${
                 freightMode === 'air'
                   ? 'bg-indigo-600 text-white shadow-xs'

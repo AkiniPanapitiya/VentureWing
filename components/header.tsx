@@ -1,75 +1,120 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Search, Bell, Moon, RefreshCw, Key, Check, FolderGit2, Database } from 'lucide-react';
+import React from 'react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAuthContext } from '@/context/AuthContext';
+import {
+  Bell,
+  Database,
+  Search,
+  ShieldCheck,
+  User,
+  LogOut,
+  LogIn,
+  ChevronDown,
+  Building
+} from 'lucide-react';
 
-export const Header: React.FC = () => {
-  const [apiKeyActive, setApiKeyActive] = useState<boolean>(true);
-  const [selectedProject, setSelectedProject] = useState<string>('Summer 24 Collection');
+export function Header() {
+  const pathname = usePathname();
+  const router = Router();
+  const { user, isAuthenticated, logout } = useAuthContext();
+
+  const getBreadcrumb = () => {
+    switch (pathname) {
+      case '/dashboard':
+        return 'Workspace Command Center';
+      case '/ingestion':
+        return 'Agent 01 CAD Vision Ingestion';
+      case '/suppliers':
+        return 'Supplier Matching Matrix';
+      case '/tariff':
+        return 'Agent 02 Sri Lanka Customs Tax Engine';
+      case '/outbox':
+        return 'Agent 03 HITL Negotiation Station';
+      case '/orders':
+        return 'Confirmed PO #882 Lifecyle Tracker';
+      case '/team':
+        return 'Technical Architecture & Team Aviate';
+      case '/login':
+        return 'User Authentication Login';
+      case '/signup':
+        return 'Enterprise Signup';
+      default:
+        return 'Overview';
+    }
+  };
 
   return (
-    <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 h-16 sticky top-0 z-20 flex items-center justify-between px-8 transition-all">
-      {/* Left: Project Selector & Live Agents Pill */}
-      <div className="flex items-center space-x-4">
-        <div className="relative">
-          <div className="flex items-center space-x-2 bg-slate-100/80 border border-slate-200 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer hover:bg-slate-200/60 transition-colors">
-            <FolderGit2 className="w-3.5 h-3.5 text-indigo-600" />
-            <span>{selectedProject}</span>
-          </div>
-        </div>
-
-        <div className="hidden sm:flex items-center space-x-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 px-2.5 py-1 rounded-full text-[11px] font-semibold">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>3 Agents Active</span>
-        </div>
-
-        {/* SQLite Database Connected Badge */}
-        <div className="hidden lg:flex items-center space-x-1.5 bg-indigo-50 border border-indigo-200 text-indigo-800 px-2.5 py-1 rounded-full text-[11px] font-bold font-mono">
-          <Database className="w-3 h-3 text-indigo-600" />
-          <span>SQLite DB: Connected (venturewing.db)</span>
-        </div>
+    <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-30 shadow-sm">
+      {/* Route Title & Breadcrumb */}
+      <div className="flex items-center space-x-3">
+        <h2 className="text-base font-extrabold text-slate-900 tracking-tight">
+          {getBreadcrumb()}
+        </h2>
+        <span className="bg-slate-100 text-slate-600 text-[10px] font-mono font-bold px-2 py-0.5 rounded border border-slate-200">
+          PROD v3.1.0
+        </span>
       </div>
 
-      {/* Right: Search, Key Toggle & User Quick Controls */}
-      <div className="flex items-center space-x-3">
+      {/* Right Controls & User Info */}
+      <div className="flex items-center space-x-4">
         {/* Search Bar */}
-        <div className="relative hidden md:block w-64">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <div className="relative hidden md:block w-56">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           <input
             type="text"
-            placeholder="Search briefs, HS codes..."
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-400"
+            placeholder="Search HS codes or suppliers..."
+            className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
 
-        {/* Live API Key Toggle Button */}
-        <button
-          onClick={() => setApiKeyActive(!apiKeyActive)}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-            apiKeyActive
-              ? 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100'
-              : 'bg-amber-50 border-amber-200 text-amber-800 hover:bg-amber-100'
-          }`}
-          title="Toggle Gemini API Live / Sandbox mode"
-        >
-          <Key className="w-3.5 h-3.5" />
-          <span>{apiKeyActive ? 'Gemini API: Live' : 'API: Sandbox'}</span>
-          {apiKeyActive && <Check className="w-3 h-3 text-indigo-600" />}
-        </button>
-
-        {/* Action Icons */}
-        <div className="flex items-center space-x-1 text-slate-500 border-l border-slate-200 pl-3">
-          <button className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors" title="Notifications">
-            <Bell className="w-4 h-4" />
-          </button>
-          <button className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors" title="Theme">
-            <Moon className="w-4 h-4" />
-          </button>
-          <button className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors" title="Refresh Sync">
-            <RefreshCw className="w-4 h-4" />
-          </button>
+        {/* Live SQLite DB Status Badge */}
+        <div className="flex items-center space-x-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-lg text-xs font-semibold">
+          <Database className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
+          <span>SQLite DB: Connected</span>
         </div>
+
+        {/* User Profile dropdown */}
+        {isAuthenticated && user ? (
+          <div className="flex items-center space-x-3 pl-2 border-l border-slate-200">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 rounded-full bg-indigo-600 text-white font-black text-xs flex items-center justify-center shadow-sm">
+                {user.full_name[0]}
+              </div>
+              <div className="hidden sm:block text-left">
+                <p className="text-xs font-bold text-slate-900 leading-tight">{user.full_name}</p>
+                <p className="text-[10px] text-slate-500 font-medium">{user.company_name}</p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                logout();
+                router.push('/login');
+              }}
+              title="Logout session"
+              className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center space-x-2 pl-2 border-l border-slate-200">
+            <Link
+              href="/login"
+              className="text-xs font-bold text-indigo-600 hover:text-indigo-800 px-3 py-1.5 rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors"
+            >
+              Sign In
+            </Link>
+          </div>
+        )}
       </div>
     </header>
   );
-};
+}
+
+function Router() {
+  return useRouter();
+}
