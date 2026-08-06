@@ -203,10 +203,10 @@ Open [http://localhost:8000/docs](http://localhost:8000/docs) to view interactiv
 
 ## 👥 Team Aviate — IDEALIZE 2026 Submission
 
-- **Panapitiya P.D.A.S.** (SLIIT) — *System Architect*
-- **Sammandapperuma S.M.A.D.V.** (NIBM) — *Full-Stack Engineer*
-- **Obeysekara R.A.T.P.** (SLIIT) — *AI Lead*
-- **Silva K.D.R.** (NIBM) — *UI/UX Specialist*
+- **Panapitiya P.D.A.S.** 
+- **Sammandapperuma S.M.A.D.V.** 
+- **Obeysekara R.A.T.P.** 
+- **Silva K.D.R.** 
 
 ---
 
